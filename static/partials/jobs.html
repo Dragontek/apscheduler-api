@@ -1,4 +1,8 @@
 <div ng-controller="JobsCtrl">
+  <h2>Jobs</h2>
+  <table class="table table-bordered display responsive no-wrap" width="100%" my-table options="options"></table>
+  <button class="btn btn-primary" data-ng-click="addJob()">Create Job</button>
+
   <ng-job-modal id="jobModal" title="Edit Job">
       <form class="form-horizontal" id="jobForm" name="jobForm" role="form">
           <div class="alert alert-danger" ng-show="error">
@@ -6,32 +10,32 @@
                 <i class="glyphicon glyphicon-warning"></i> {{ error.message.name }}
               </ul>
           </div>
-
           <div class="form-group">
-              <label for="lname" class="col-sm-2 control-label">Job Id:</label>
+              <label for="id" class="col-sm-2 control-label">Job Id:</label>
               <div class="col-sm-10">
                   <input type="text" class="form-control" readonly id="id" name="id" placeholder="Job ID" data-ng-model="job.id">
               </div>
           </div>
-
           <div class="form-group">
               <label for="name" class="col-sm-2 control-label">Job Name:</label>
               <div class="col-sm-10">
                   <input type="text" class="form-control" id="name" name="name" placeholder="Job Name" data-ng-model="job.name" required>
+                  <div class="help-block">Should be an list of valid arguments to be passed (60, false, some text)</div>
               </div>
           </div>
-
           <div class="form-group">
-              <label for="task" class="col-sm-2 control-label">Task Class:</label>
+              <label for="func" class="col-sm-2 control-label">Task Class: </label>
               <div class="col-sm-10">
-                  <input type="text" class="form-control" id="task" name="task" placeholder="Task Class" data-ng-model="job.task">
+                  <input type="text" class="form-control" id="func" name="func" placeholder="Task Class" data-ng-model="job.task_class" required>
+                  <div class="help-block">This class <strong>must</strong> implement BaseTask</div>
               </div>
           </div>
 
           <div class="form-group">
               <label for="args" class="col-sm-2 control-label">Arguments:</label>
               <div class="col-sm-10">
-                  <input type="text" class="form-control" id="args" name="args" placeholder="[1, 2, 'text']" data-ng-model="job.args">
+                  <input type="text" class="form-control" id="args" name="args" placeholder="60, false, some text" data-ng-list="," data-ng-model="job.args">
+                  <div class="help-block">Should be an list of valid arguments to be passed (60, false, some text)</div>
               </div>
           </div>
 
@@ -39,14 +43,14 @@
               <label for="start_date" class="col-sm-2 control-label">Start Date:</label>
               <div class="col-sm-4">
                 <div class="input-group">
-                  <input type="text" class="form-control" id="start_date" name="start_date" placeholder="yyyy-mm-dd" data-ng-model="job.start_date" uib-datepicker-popup="{{format}}" is-open="status.opened" min-date="minDate" max-date="maxDate" datepicker-options="dateOptions" date-disabled="disabled(date, mode)" ng-required="true" close-text="Close">
+                  <input type="text" class="form-control" id="start_date" name="start_date" placeholder="yyyy-mm-dd" data-ng-model="job.start_date" uib-datepicker-popup is-open="status.opened" min-date="minDate" max-date="maxDate" ng-required="true" close-text="Close">
                   <span class="input-group-addon" ng-click="open($event)"><i class="glyphicon glyphicon-calendar"></i></span>
                 </div>
               </div>
               <label for="end_date" class="col-sm-2 control-label">End Date:</label>
               <div class="col-sm-4">
                 <div class="input-group">
-                  <input type="text" class="form-control" id="end_date" name="end_date" placeholder="yyyy-mm-dd" data-ng-model="job.end_date">
+                  <input type="text" class="form-control" id="end_date" name="end_date" placeholder="yyyy-mm-dd" data-ng-model="job.end_date" uib-datepicker-popup is-open="status.opened" min-date="minDate" max-date="maxDate" ng-required="true" close-text="Close">
                   <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
                 </div>
               </div>
@@ -76,11 +80,6 @@
           </div>
       </form>
   </ng-job-modal>
-
-
-  <h2>Jobs</h2>
-  <table class="table table-bordered display responsive no-wrap" width="100%" my-table options="options"></table>
-  <button class="btn btn-primary" data-ng-click="addJob()">Create Job</button>
 </div>
 
 <script id="modalTemplate.html" type="text/ng-template">

@@ -1,5 +1,7 @@
 var app = angular.module('app', ['ui.router', 'ui.bootstrap', 'ngResource']);
 
+app.constant("moment", moment);
+
 app.config(['$stateProvider', '$urlRouterProvider',
   function($stateProvider, $urlRouterProvider) {
     $urlRouterProvider.otherwise("/");
@@ -7,10 +9,16 @@ app.config(['$stateProvider', '$urlRouterProvider',
       .state('jobs', {
         url: "/",
         templateUrl: "static/partials/jobs.html"
-      });
+      })
+      .state('about', {
+        url: "/",
+        templateUrl: "static/partials/about.html"
+      })
+
+      ;
 }]);
 
-app.controller('JobsCtrl', ['$scope', '$http', '$compile', function($scope, $http, $compile) {
+app.controller('JobsCtrl', ['$scope', '$http', '$compile', 'moment', function($scope, $http, $compile, moment) {
 
     $scope.options = {
       ajax: {
@@ -23,8 +31,13 @@ app.controller('JobsCtrl', ['$scope', '$http', '$compile', function($scope, $htt
         { title: 'Name', data: 'name', className: 'all', render: function(data, type, full, meta) {
           return "<a href=\"#\" onclick=\"angular.element(this).scope().editJob('"+full.id+"')\">" + data + "</a>";
         } },
+        { title: 'Task Class', data: 'task_class', className: 'desktop' },
         { title: 'Trigger', data: 'trigger', className: 'desktop' },
-        { title: 'Next Run', data: 'next_run_time', className: 'all'}
+        { title: 'Start Date', data: 'start_date', className: 'desktop' },
+        { title: 'End Date', data: 'end_date', className: 'desktop' },
+        { title: 'Next Run', data: 'next_run_time', className: 'all', type: 'date', render: function(data) {
+          return data == null ? '<span class="text-muted">Inactive</span>' : '<span title="' + moment(data).format("LLLL") + '">' + moment(data).calendar() + '</span>';
+        }}
 
       ]
     };
@@ -33,15 +46,6 @@ app.controller('JobsCtrl', ['$scope', '$http', '$compile', function($scope, $htt
       $scope.status.opened = true;
     };
 
-    $scope.setDate = function(year, month, day) {
-      $scope.dt = new Date(year, month, day);
-    };
-    $scope.dateOptions = {
-      formatYear: 'yy',
-      startingDay: 1
-    };
-
-    $scope.formats = ['dd-MMMM-yyyy', 'yyyy/MM/dd', 'dd.MM.yyyy', 'shortDate'];
     $scope.format = 'yyyy-MM-dd';
 
     $scope.status = {

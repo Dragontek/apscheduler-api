@@ -17,7 +17,7 @@ api = Api(app)
 fields = {
     'id': fields.String(),
     'name': fields.String(),
-    'func': fields.String(),
+    'task_class': fields.String(attribute=lambda x: x.func_ref.replace(':', '.').replace('.execute', '')),
     'next_run_time': fields.DateTime(dt_format='iso8601'),
     'misfire_grace_time': fields.String(),
     'coalesce': fields.Boolean(),
@@ -57,10 +57,20 @@ def abort_if_job_doesnt_exist(job_id):
 def shutdown():
     scheduler.shutdown()
 
+def my_import(name):
+    components = name.split('.')
+    mod = __import__(components[0])
+    for comp in components[1:]:
+        mod = getattr(mod, comp)
+    return mod
+
+
 atexit.register(shutdown)
 
 parser = reqparse.RequestParser()
 parser.add_argument('name', required=True, help="Name is required")
+parser.add_argument('task_class', required=True, help="Task Class is required")
+
 parser.add_argument('minute', type=int)
 parser.add_argument('hour', type=int)
 parser.add_argument('day', type=int)
@@ -68,14 +78,15 @@ parser.add_argument('month', type=int)
 parser.add_argument('day_of_week')
 parser.add_argument('start_date')
 parser.add_argument('end_date')
-parser.add_argument('args')
+
+parser.add_argument('misfire_grace_time')
+parser.add_argument('coalesce', type=bool)
+
+parser.add_argument('args', action='append')
 parser.add_argument('active')
 
-def execute():
-    pass
-
-# Todo
-# shows a single todo item and lets you delete a todo item
+# Job
+# shows a single Job and lets you delete a todo item
 class Job(Resource):
     @marshal_with(fields)
     def get(self, job_id):
@@ -90,12 +101,17 @@ class Job(Resource):
     @marshal_with(fields)
     def put(self, job_id):
         args = parser.parse_args()
+
+        klass = my_import(args['task_class'])
+        func = getattr(klass, 'execute')
+
         # TODO: really parse AND VALIDATE the args here or this could get dangerous
         job = scheduler.add_job(
-            execute,
+            func,
             'cron',
             id=job_id,
             name=args['name'],
+            args=args['args'],
             start_date=args['start_date'],
             end_date=args['end_date'],
             minute=args['minute'],
@@ -105,11 +121,10 @@ class Job(Resource):
             day_of_week=args['day_of_week'],
             replace_existing=True
         )
-        return job, 201
+        return job, 200
 
 
-# JobList
-# shows a list of all jobs, and lets you POST to add new tasks
+# JobList shows a list of all jobs, and lets you POST to add a new one
 class JobList(Resource):
     @marshal_with(fields)
     def get(self):
@@ -118,11 +133,16 @@ class JobList(Resource):
     @marshal_with(fields)
     def post(self):
         args = parser.parse_args()
+
+        klass = my_import(args['task_class'])
+        func = getattr(klass, 'execute')
+
         # TODO: really parse AND VALIDATE the args here or this could get dangerous
         job = scheduler.add_job(
-            execute,
+            func,
             'cron',
             name=args['name'],
+            args=args['args'],
             start_date=args['start_date'],
             end_date=args['end_date'],
             minute=args['minute'],
@@ -133,7 +153,6 @@ class JobList(Resource):
             replace_existing=True
         )
         return job, 201
-
 
 ##
 ## Actually setup the Api resource routing here
@@ -147,4 +166,4 @@ def index(theme=None):
     return render_template('index.html', theme=theme)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(debug=True)
