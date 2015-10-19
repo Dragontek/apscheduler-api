@@ -26,17 +26,17 @@ And then visit the provided AngularJS interface at `http://localhost:5000`
 
 * **Method:**
 
-  `GET`
+    `GET`
 
 * **URL Params**
 
   **Required:**
 
-  None
+    None
 
 * **Data Params**
 
-  None
+    None
 
 
 * **Success Response:**
