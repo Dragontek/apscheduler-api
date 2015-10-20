@@ -189,7 +189,8 @@ class JobList(Resource):
 ##
 @app.route("/")
 def index():
-    return render_template('index.html', theme='paper')
+    return app.send_static_file('index.html')
+    #return render_template('index.html', theme='paper')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
