@@ -1,6 +1,10 @@
-# APSceduler API
+# APScheduler API
 
 Provides a RESTful interface to Advanced Python Scheduler ([APScheduler]), using [Flask] and [Flask RESTful].  Additionally, a front-end web UI is provided, and is written in AngularJS.
+
+Originally, this was written as a beginning to a PVR application, but I've split this into it's own API since I thought it might be of some use to someone else.
+
+** WARNING: ** This is still in early development, and not production ready.
 
 [APScheduler]: http://apscheduler.readthedocs.org
 [Flask]: http://flask.pocoo.org/
@@ -14,7 +18,7 @@ To start using the API, simply clone this repository and run:
 
 And then visit the provided AngularJS interface at `http://localhost:5000`
 
-See the [API Documentation](Api.md)
+See the [API Documentation](API.md)
 
 ## License
 

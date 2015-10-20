@@ -1,13 +1,13 @@
 <div ng-controller="JobsCtrl">
   <h2>Jobs</h2>
-  <table class="table table-bordered display responsive no-wrap" width="100%" my-table options="options"></table>
+  <table id="table" class="table table-bordered display responsive no-wrap" width="100%" my-table options="options"></table>
   <button class="btn btn-primary" data-ng-click="addJob()">Create Job</button>
 
   <ng-job-modal id="jobModal" title="Edit Job">
       <form class="form-horizontal" id="jobForm" name="jobForm" role="form">
           <div class="alert alert-danger" ng-show="error">
               <ul id="danger">
-                <i class="glyphicon glyphicon-warning"></i> {{ error.message.name }}
+                <i class="glyphicon glyphicon-alert"></i> {{ error.message }}
               </ul>
           </div>
           <div class="form-group">

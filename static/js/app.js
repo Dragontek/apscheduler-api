@@ -18,11 +18,10 @@ app.config(['$stateProvider', '$urlRouterProvider',
       ;
 }]);
 
-app.controller('JobsCtrl', ['$scope', '$http', '$compile', 'moment', function($scope, $http, $compile, moment) {
-
+app.controller('JobsCtrl', ['$scope', '$http', '$compile', 'moment', 'Job', function($scope, $http, $compile, moment, Job) {
     $scope.options = {
       ajax: {
-        url: '/jobs',
+        url: '/api/jobs',
         dataSrc: ''
       },
       order: [[2, 'asc']],
@@ -41,6 +40,8 @@ app.controller('JobsCtrl', ['$scope', '$http', '$compile', 'moment', function($s
 
       ]
     };
+
+    //$scope.options.data = Job.query();
 
     $scope.open = function($event) {
       $scope.status.opened = true;
@@ -63,8 +64,9 @@ app.controller('JobsCtrl', ['$scope', '$http', '$compile', 'moment', function($s
 
     $scope.editJob = function(job_id) {
         $scope.title = 'Edit Job';
-        $http.get('/jobs/' + job_id).then(function(response) {
-           $scope.job = response.data;
+        Job.get({ id: job_id }, function(data) {
+            $scope.job = data;
+           console.log(data)
         });
         $scope.error = null;
         angular.element('#jobModal').modal('show');
@@ -75,36 +77,36 @@ app.controller('JobsCtrl', ['$scope', '$http', '$compile', 'moment', function($s
         // Add validation
         if (job.id == undefined) {
             // Create a new user
-            $http.post('/jobs', job).then(function(response) {
+            $http.post('/api/jobs', job).then(function(response) {
                 angular.element('#jobModal').modal('hide');
+                angular.element('#table').dataTable().api().ajax.reload();
             }, function(response) {
-               $scope.error = response.data
+               $scope.error = response.data;
+               return;
             });
         } else {
-            $http.put('/jobs/' + job.id, job).then(function(response) {
-                console.log(response);
+            $http.put('/api/jobs/' + job.id, job).then(function(response) {
                 angular.element('#jobModal').modal('hide');
+                angular.element('#table').dataTable().api().ajax.reload();
+            }, function(response) {
+               $scope.error = response.data;
+               return;
             });
         }
-        $http.get('/jobs').then(function(response) {
-           $scope.options.data = response.data;
-        })
     };
 
     $scope.deleteJob = function(job_id) {
       $http.delete('/jobs/' + job_id).then(function(response) {
           console.log("Job Deleted!");
           angular.element('#jobModal').modal('hide');
+          angular.element('#table').dataTable().api().ajax.reload();
       });
-      $http.get('/jobs').then(function(response) {
-         $scope.options.data = response.data;
-      })
     };
 }]);
 
 // TODO: Finish out the Job resource and use it instead of direct $HTTP calls
 app.factory('Job', ['$resource', function($resource) {
-  return $resource('/jobs/:id/');
+  return $resource('/api/jobs/:id/');
 }]);
 
 app.directive('ngJobModal', function() {

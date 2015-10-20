@@ -1,20 +1,28 @@
-from flask import Flask
+from flask import Flask, Blueprint
 from flask import render_template
 
-from flask_restful import reqparse, abort, fields, marshal_with, Api, Resource
+from flask.ext.restplus import Api, Resource, fields
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
-from flask_restful import Resource, fields, marshal_with
+
+from tasks import BaseTask, recorder, example
 
 import atexit
 
 app = Flask(__name__)
-api = Api(app)
+app.config.SWAGGER_UI_DOC_EXPANSION = 'list'
+blueprint = Blueprint('api', __name__, url_prefix='/api')
+api = Api(blueprint, version='1.0', title="APScheduler API",
+    description="A simple API to access APScheduler."
+)
+app.register_blueprint(blueprint)
+
+ns = api.namespace('jobs', description='Job operations')
 
 # Fields that are expected and need to be exposed from a Job
-fields = {
+fields = api.model('Job', {
     'id': fields.String(),
     'name': fields.String(),
     'task_class': fields.String(attribute=lambda x: x.func_ref.replace(':', '.').replace('.execute', '')),
@@ -34,7 +42,7 @@ fields = {
     'hour': fields.String(attribute=lambda x: x.trigger.fields[5] if not x.trigger.fields[5].is_default else None ),
     'minute': fields.String(attribute=lambda x: x.trigger.fields[6] if not x.trigger.fields[6].is_default else None ),
     'second': fields.String(attribute=lambda x: x.trigger.fields[7] if not x.trigger.fields[7].is_default else None ),
-}
+})
 
 jobstores = {
     'default': SQLAlchemyJobStore(url='sqlite:///jobs.sqlite3')
@@ -50,9 +58,6 @@ def job_listener(event):
 
 scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
 
-def abort_if_job_doesnt_exist(job_id):
-    if None == scheduler.get_job(job_id):
-        abort(404, message="Job {} doesn't exist".format(job_id))
 
 def shutdown():
     scheduler.shutdown()
@@ -67,9 +72,9 @@ def my_import(name):
 
 atexit.register(shutdown)
 
-parser = reqparse.RequestParser()
-parser.add_argument('name', required=True, help="Name is required")
-parser.add_argument('task_class', required=True, help="Task Class is required")
+parser = api.parser()
+parser.add_argument('name', required=True, help="Name is required", location="json")
+parser.add_argument('task_class', required=True, help="Task Class is required", location="json")
 
 parser.add_argument('minute', type=int)
 parser.add_argument('hour', type=int)
@@ -85,25 +90,39 @@ parser.add_argument('coalesce', type=bool)
 parser.add_argument('args', action='append')
 parser.add_argument('active')
 
+
+def abort_if_job_doesnt_exist(job_id):
+    if None == scheduler.get_job(job_id):
+        abort(404, message="Job {} doesn't exist".format(job_id))
+
 # Job
 # shows a single Job and lets you delete a todo item
+@ns.route('/<string:job_id>')
+@api.doc(responses={404: 'Job not found'}, params={'job_id': 'The Job ID'})
 class Job(Resource):
-    @marshal_with(fields)
+    @api.marshal_with(fields)
     def get(self, job_id):
+        ''' Get a job by ID '''
         abort_if_job_doesnt_exist(job_id)
         return scheduler.get_job(job_id)
 
     def delete(self, job_id):
+        ''' Delete a job by ID '''
         abort_if_job_doesnt_exist(job_id)
         scheduler.remove_job(job_id)
         return '', 204
 
-    @marshal_with(fields)
+    @api.doc(parser=parser)
+    @api.marshal_with(fields)
     def put(self, job_id):
+        ''' Update a job by ID '''
         args = parser.parse_args()
 
         klass = my_import(args['task_class'])
         func = getattr(klass, 'execute')
+
+        if not issubclass(klass, BaseTask):
+            abort(400, message="Task Class {} must extend BaseTask".format(klass))
 
         # TODO: really parse AND VALIDATE the args here or this could get dangerous
         job = scheduler.add_job(
@@ -125,17 +144,28 @@ class Job(Resource):
 
 
 # JobList shows a list of all jobs, and lets you POST to add a new one
+@ns.route('/')
 class JobList(Resource):
-    @marshal_with(fields)
+    '''Shows a list of all jobs, and lets you POST to add new jobs'''
+    @api.marshal_with(fields)
     def get(self):
+        '''List all jobs'''
         return scheduler.get_jobs()
 
-    @marshal_with(fields)
+    @api.doc(parser=parser)
+    @api.marshal_with(fields, code=201)
     def post(self):
+        ''' Add a new job '''
         args = parser.parse_args()
 
-        klass = my_import(args['task_class'])
-        func = getattr(klass, 'execute')
+        try:
+            klass = my_import(args['task_class'])
+            func = getattr(klass, 'execute')
+        except:
+            abort(400, message="Task Class [{}] could not be found.".format(args['task_class']))
+
+        if not issubclass(klass, BaseTask):
+            abort(400, message="Task Class [{}] must extend BaseTask.".format(args['task_class']))
 
         # TODO: really parse AND VALIDATE the args here or this could get dangerous
         job = scheduler.add_job(
@@ -155,15 +185,11 @@ class JobList(Resource):
         return job, 201
 
 ##
-## Actually setup the Api resource routing here
+## Map our AngularJS page
 ##
-api.add_resource(JobList, '/jobs')
-api.add_resource(Job, '/jobs/<job_id>')
-
 @app.route("/")
-@app.route("/<theme>")
-def index(theme=None):
-    return render_template('index.html', theme=theme)
+def index():
+    return render_template('index.html', theme='paper')
 
 if __name__ == '__main__':
     app.run(debug=True)
