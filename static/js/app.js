@@ -31,7 +31,7 @@ app.controller('JobsCtrl', ['$scope', '$http', '$compile', 'moment', 'Job', func
           return "<a href=\"#\" onclick=\"angular.element(this).scope().editJob('"+full.id+"')\">" + data + "</a>";
         } },
         { title: 'Task Class', data: 'task_class', className: 'desktop' },
-        { title: 'Trigger', data: 'trigger', className: 'desktop' },
+        { title: 'Trigger', data: 'trigger', visible: false, className: 'desktop' },
         { title: 'Start Date', data: 'start_date', className: 'desktop' },
         { title: 'End Date', data: 'end_date', className: 'desktop' },
         { title: 'Next Run', data: 'next_run_time', className: 'all', type: 'date', render: function(data) {
