@@ -2,8 +2,9 @@ var app = angular.module('app', ['ui.router', 'ui.bootstrap', 'ngResource']);
 
 app.constant("moment", moment);
 
-app.config(['$stateProvider', '$urlRouterProvider',
-  function($stateProvider, $urlRouterProvider) {
+app.config(['$stateProvider', '$urlRouterProvider', '$resourceProvider',
+  function($stateProvider, $urlRouterProvider, $resourceProvider) {
+    $resourceProvider.defaults.stripTrailingSlashes = false;
     $urlRouterProvider.otherwise("/");
     $stateProvider
       .state('jobs', {
@@ -11,7 +12,7 @@ app.config(['$stateProvider', '$urlRouterProvider',
         templateUrl: "static/partials/jobs.html"
       })
       .state('about', {
-        url: "/",
+        url: "/about",
         templateUrl: "static/partials/about.html"
       })
 
@@ -32,8 +33,12 @@ app.controller('JobsCtrl', ['$scope', '$http', '$compile', 'moment', 'Job', func
         } },
         { title: 'Task Class', data: 'task_class', className: 'desktop' },
         { title: 'Trigger', data: 'trigger', visible: false, className: 'desktop' },
-        { title: 'Start Date', data: 'start_date', className: 'desktop' },
-        { title: 'End Date', data: 'end_date', className: 'desktop' },
+        { title: 'Start Date', data: 'start_date', className: 'desktop', render: function(data) {
+          return data ? moment(data).format('YYYY-MM-DD') : data
+        } },
+        { title: 'End Date', data: 'end_date', className: 'desktop', render: function(data) {
+          return data ? moment(data).format('YYYY-MM-DD') : data
+        } },
         { title: 'Next Run', data: 'next_run_time', className: 'all', type: 'date', render: function(data) {
           return data == null ? '<span class="text-muted">Inactive</span>' : '<span title="' + moment(data).format("LLLL") + '">' + moment(data).calendar() + '</span>';
         }}
@@ -43,31 +48,32 @@ app.controller('JobsCtrl', ['$scope', '$http', '$compile', 'moment', 'Job', func
 
     //$scope.options.data = Job.query();
 
-    $scope.open = function($event) {
-      $scope.status.opened = true;
+    $scope.start_open = function($event) {
+      $scope.status.start_opened = true;
+    };
+    $scope.end_open = function($event) {
+      $scope.status.end_opened = true;
     };
 
     $scope.format = 'yyyy-MM-dd';
 
     $scope.status = {
-      opened: false
+      start_opened: false,
+      end_opened: false
     };
 
     // Add job
     $scope.addJob = function () {
         // Clear the form
         $scope.title = 'Add Job';
-        $scope.job = { };
+        $scope.job = new Job();
         $scope.error = null;
         angular.element('#jobModal').modal('show');
     };
 
     $scope.editJob = function(job_id) {
         $scope.title = 'Edit Job';
-        Job.get({ id: job_id }, function(data) {
-            $scope.job = data;
-           console.log(data)
-        });
+        $scope.job = Job.get({ id: job_id });
         $scope.error = null;
         angular.element('#jobModal').modal('show');
     };
@@ -77,7 +83,7 @@ app.controller('JobsCtrl', ['$scope', '$http', '$compile', 'moment', 'Job', func
         // Add validation
         if (job.id == undefined) {
             // Create a new user
-            $http.post('/api/jobs', job).then(function(response) {
+            $scope.job.$save().then(function(response) {
                 angular.element('#jobModal').modal('hide');
                 angular.element('#table').dataTable().api().ajax.reload();
             }, function(response) {
@@ -106,7 +112,7 @@ app.controller('JobsCtrl', ['$scope', '$http', '$compile', 'moment', 'Job', func
 
 // TODO: Finish out the Job resource and use it instead of direct $HTTP calls
 app.factory('Job', ['$resource', function($resource) {
-  return $resource('/api/jobs/:id/');
+  return $resource('/api/jobs/:id');
 }]);
 
 app.directive('ngJobModal', function() {
