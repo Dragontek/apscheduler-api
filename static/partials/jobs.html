@@ -43,14 +43,14 @@
               <label for="start_date" class="col-sm-2 control-label">Start Date:</label>
               <div class="col-sm-4">
                 <div class="input-group">
-                  <input type="text" class="form-control" id="start_date" name="start_date" placeholder="yyyy-mm-dd" data-ng-model="job.start_date" uib-datepicker-popup is-open="status.start_opened" min-date="minDate" max-date="maxDate" ng-required="true" close-text="Close">
+                  <input type="text" class="form-control" id="start_date" name="start_date" placeholder="MM/DD/YYYY" data-ng-model="job.start_date" uib-datepicker-popup="{{format}}" is-open="status.start_opened" min-date="minDate" max-date="maxDate" ng-required="true" close-text="Close">
                   <span class="input-group-addon" ng-click="start_open($event)"><i class="glyphicon glyphicon-calendar"></i></span>
                 </div>
               </div>
               <label for="end_date" class="col-sm-2 control-label">End Date:</label>
               <div class="col-sm-4">
                 <div class="input-group">
-                  <input type="text" class="form-control" id="end_date" name="end_date" placeholder="yyyy-mm-dd" data-ng-model="job.end_date" uib-datepicker-popup is-open="status.end_opened" min-date="minDate" max-date="maxDate" ng-required="true" close-text="Close">
+                  <input type="text" class="form-control" id="end_date" name="end_date" placeholder="MM/DD/YYYY" data-ng-model="job.end_date" uib-datepicker-popup="{{format}}" is-open="status.end_opened" min-date="minDate" max-date="maxDate" ng-required="true" close-text="Close">
                   <span class="input-group-addon" ng-click="end_open($event)"><i class="glyphicon glyphicon-calendar"></i></span>
                 </div>
               </div>

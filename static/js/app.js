@@ -25,7 +25,7 @@ app.controller('JobsCtrl', ['$scope', '$http', '$compile', 'moment', 'Job', func
         url: '/api/jobs',
         dataSrc: ''
       },
-      order: [[2, 'asc']],
+      order: [[5, 'asc']],
       responsive: true,
       columns: [
         { title: 'Name', data: 'name', className: 'all', render: function(data, type, full, meta) {
@@ -33,13 +33,13 @@ app.controller('JobsCtrl', ['$scope', '$http', '$compile', 'moment', 'Job', func
         } },
         { title: 'Task Class', data: 'task_class', className: 'desktop' },
         { title: 'Trigger', data: 'trigger', visible: false, className: 'desktop' },
-        { title: 'Start Date', data: 'start_date', className: 'desktop', render: function(data) {
-          return data ? moment(data).format('YYYY-MM-DD') : data
+        { title: 'Start Date', data: 'start_date', className: 'desktop text-right', render: function(data) {
+          return data ? moment(data).format('MM/DD/YYYY') : data
         } },
-        { title: 'End Date', data: 'end_date', className: 'desktop', render: function(data) {
-          return data ? moment(data).format('YYYY-MM-DD') : data
+        { title: 'End Date', data: 'end_date', className: 'desktop text-right', render: function(data) {
+          return data ? moment(data).format('MM/DD/YYYY') : data
         } },
-        { title: 'Next Run', data: 'next_run_time', className: 'all', type: 'date', render: function(data) {
+        { title: 'Next Run', data: 'next_run_time', className: 'all text-right', type: 'date', render: function(data) {
           return data == null ? '<span class="text-muted">Inactive</span>' : '<span title="' + moment(data).format("LLLL") + '">' + moment(data).calendar() + '</span>';
         }}
 
@@ -55,7 +55,7 @@ app.controller('JobsCtrl', ['$scope', '$http', '$compile', 'moment', 'Job', func
       $scope.status.end_opened = true;
     };
 
-    $scope.format = 'yyyy-MM-dd';
+    $scope.format = 'MM/dd/yyyy';
 
     $scope.status = {
       start_opened: false,
